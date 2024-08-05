@@ -18,6 +18,7 @@ impl DiskBenchmark {
     pub fn run(&self){
         if self.delete_temp_file() {
             self.run_write();
+            println!();
             self.run_read();
             self.delete_temp_file();
         }else{
