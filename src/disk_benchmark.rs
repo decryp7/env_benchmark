@@ -1,6 +1,6 @@
 use std::{env, fs, thread};
 use std::fs::metadata;
-use indicatif::{HumanBytes, HumanCount, HumanDuration, ProgressBar, ProgressStyle};
+use indicatif::{DecimalBytes, HumanBytes, HumanCount, HumanDuration, ProgressBar, ProgressStyle};
 use std::io::{BufWriter, Write, BufReader, Read};
 use std::time::{Duration, Instant};
 use console::Style;
@@ -46,8 +46,8 @@ impl DiskBenchmark {
         let bar = ProgressBar::new(self.size)
             .with_message(format!("Writing {} of size {}...",
                                   self.path,
-                                  HumanBytes(self.size)));
-        bar.set_style(ProgressStyle::with_template("{msg} [{elapsed}]\n{wide_bar:.cyan/blue} {bytes}/{total_bytes}")
+                                  DecimalBytes(self.size)));
+        bar.set_style(ProgressStyle::with_template("{msg} [{elapsed}]\n{wide_bar:.cyan/blue} {decimal_bytes}/{decimal_total_bytes}")
             .unwrap()
             .progress_chars("##-"));
         bar.inc(0);
@@ -73,8 +73,9 @@ impl DiskBenchmark {
 
         bar.finish();
         let elapsed = now.elapsed();
-        println!("Write took {}.",
-                 value_style.apply_to(HumanDuration(Duration::from_secs(elapsed.as_secs()))));
+        println!("Write took {}. Speed: {}/s",
+                 value_style.apply_to(HumanDuration(Duration::from_secs(elapsed.as_secs()))),
+                 DecimalBytes(self.size/elapsed.as_secs()));
     }
 
     fn run_read(&self) {
@@ -82,8 +83,8 @@ impl DiskBenchmark {
         let bar = ProgressBar::new(self.size)
             .with_message(format!("Reading {} of size {}...",
                                   self.path,
-                                  HumanBytes(self.size)));
-        bar.set_style(ProgressStyle::with_template("{msg} [{elapsed}]\n{wide_bar:.cyan/blue} {bytes}/{total_bytes}")
+                                  DecimalBytes(self.size)));
+        bar.set_style(ProgressStyle::with_template("{msg} [{elapsed}]\n{wide_bar:.cyan/blue} {decimal_bytes}/{decimal_total_bytes}")
             .unwrap()
             .progress_chars("##-"));
         bar.inc(0);
@@ -100,7 +101,8 @@ impl DiskBenchmark {
 
         bar.finish();
         let elapsed = now.elapsed();
-        println!("Read took {}.",
-                 value_style.apply_to(HumanDuration(Duration::from_secs(elapsed.as_secs()))));
+        println!("Read took {}. Speed: {}/s",
+                 value_style.apply_to(HumanDuration(Duration::from_secs(elapsed.as_secs()))),
+                 DecimalBytes(self.size/elapsed.as_secs()));
     }
 }
