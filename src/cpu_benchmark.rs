@@ -30,8 +30,6 @@ impl CPUBenchmark {
         let total_calc: u64 = self.num_calculations * self.num_iterations;
         let iterations_per_core: u64 = self.num_calculations / self.num_cpu_cores;
 
-        let now = Instant::now();
-
         let bar = ProgressBar::new(self.num_iterations)
             .with_message(format!("Running {} calculations({} iterations of {} calculations) on {} threads...",
                          HumanCount(total_calc),
@@ -42,6 +40,8 @@ impl CPUBenchmark {
             .unwrap()
             .progress_chars("##-"));
         bar.inc(0);
+
+        let now = Instant::now();
         for _i in 0..self.num_iterations {
             let mut results = Vec::new();
             let mut threads = Vec::new();
@@ -54,8 +54,10 @@ impl CPUBenchmark {
             bar.inc(1);
         }
         bar.finish();
+
         let elapsed = now.elapsed();
         let calculations_per_sec: f64 = (total_calc as f64) / (elapsed.as_secs() as f64);
+
         println!("Total runtime: {}",
                  value_style.apply_to(HumanDuration(Duration::from_secs(elapsed.as_secs()))));
         println!("Calculations per second: {} cps.",

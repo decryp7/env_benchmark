@@ -1,11 +1,15 @@
 mod cpu_benchmark;
 mod disk_benchmark;
 
+use std::env;
 use std::io::{Read};
+use std::path::Path;
 use std::thread::available_parallelism;
 use console::{Style};
+use parse_size::parse_size;
 use sysinfo::{System};
 use crate::cpu_benchmark::CPUBenchmark;
+use crate::disk_benchmark::DiskBenchmark;
 
 fn main() {
     let num_calculations = 100_000_000;
@@ -30,6 +34,12 @@ fn main() {
     let available_cores: u64 = available_parallelism().unwrap().get() as u64;
     cpu_benchmark = CPUBenchmark::new(available_cores, num_calculations, num_iterations);
     cpu_benchmark.run();
+    println!();
+
+    let disk_benchmark = DiskBenchmark::new(Path::new(env::temp_dir()
+        .as_os_str()).join("disk.benchmark").to_str().unwrap().to_string(),
+                                            parse_size("4 GB").unwrap());
+    disk_benchmark.run();
     println!();
 
     let term = console::Term::stdout();
