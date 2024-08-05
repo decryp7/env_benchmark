@@ -1,4 +1,4 @@
-use std::{env, fs, thread};
+use std::{cmp, env, fs, thread};
 use std::fs::metadata;
 use indicatif::{DecimalBytes, HumanBytes, HumanCount, HumanDuration, ProgressBar, ProgressStyle};
 use std::io::{BufWriter, Write, BufReader, Read};
@@ -75,7 +75,7 @@ impl DiskBenchmark {
         let elapsed = now.elapsed();
         println!("Write took {}. Speed: {}/s",
                  value_style.apply_to(HumanDuration(Duration::from_secs(elapsed.as_secs()))),
-                 DecimalBytes(self.size/elapsed.as_secs()));
+                 DecimalBytes(self.size/cmp::max(elapsed.as_secs(), 1)));
     }
 
     fn run_read(&self) {
@@ -103,6 +103,6 @@ impl DiskBenchmark {
         let elapsed = now.elapsed();
         println!("Read took {}. Speed: {}/s",
                  value_style.apply_to(HumanDuration(Duration::from_secs(elapsed.as_secs()))),
-                 DecimalBytes(self.size/elapsed.as_secs()));
+                 DecimalBytes(self.size/cmp::max(elapsed.as_secs(), 1)));
     }
 }
