@@ -1,7 +1,6 @@
 use std::time::{Duration, Instant};
 use console::Style;
-use indicatif::{HumanDuration, ProgressBar, ProgressStyle};
-use thousands::Separable;
+use indicatif::{HumanCount, HumanDuration, HumanFloatCount, ProgressBar, ProgressStyle};
 
 pub struct CPUBenchmark {
     num_cpu_cores: u64,
@@ -29,24 +28,16 @@ impl CPUBenchmark {
     pub fn run(&self){
         let value_style = Style::new().bright().red().bold();
         let total_calc: u64 = self.num_calculations * self.num_iterations;
-        // println!(
-        //     "Running {} calculations({} iterations of {} calculations) on {} threads...",
-        //     total_calc.separate_with_commas(),
-        //     self.num_iterations.separate_with_commas(),
-        //     self.num_calculations.separate_with_commas(),
-        //     self.num_cpu_cores
-        // );
-
         let iterations_per_core: u64 = self.num_calculations / self.num_cpu_cores;
 
         let now = Instant::now();
 
         let bar = ProgressBar::new(self.num_iterations)
             .with_message(format!("Running {} calculations({} iterations of {} calculations) on {} threads...",
-                         total_calc.separate_with_commas(),
-                         self.num_iterations.separate_with_commas(),
-                         self.num_calculations.separate_with_commas(),
-                         self.num_cpu_cores));
+                         HumanCount(total_calc),
+                         HumanCount(self.num_iterations),
+                         HumanCount(self.num_calculations),
+                         HumanCount(self.num_cpu_cores)));
         bar.set_style(ProgressStyle::with_template("{msg} [{elapsed}]\n{wide_bar:.cyan/blue} {pos}/{len}")
             .unwrap()
             .progress_chars("##-"));
@@ -65,10 +56,10 @@ impl CPUBenchmark {
         bar.finish();
         let elapsed = now.elapsed();
         let calculations_per_sec: f64 = (total_calc as f64) / (elapsed.as_secs() as f64);
-        println!("Total runtime: {}s",
+        println!("Total runtime: {}",
                  value_style.apply_to(HumanDuration(Duration::from_secs(elapsed.as_secs()))));
-        println!("Calculations per second: {}cps.",
-                 value_style.apply_to(calculations_per_sec.round().separate_with_commas()));
+        println!("Calculations per second: {} cps.",
+                 value_style.apply_to(HumanFloatCount(calculations_per_sec.round())));
     }
 }
 

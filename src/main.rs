@@ -1,4 +1,5 @@
 mod cpu_benchmark;
+mod disk_benchmark;
 
 use std::io::{Read};
 use std::thread::available_parallelism;
@@ -19,7 +20,7 @@ fn main() {
         .unwrap_or(String::from("Unknown"))));
     println!("{:<30}{:<10}", "System OS version:", system_info_style.apply_to(System::os_version()
                 .unwrap_or(String::from("Unknown"))));
-    println!("{:<30}{:<10}", "Number of CPU Cores:", system_info_style.apply_to(sys.cpus().len()));
+    println!("{:<30}{:<10}", "Number of CPU threads:", system_info_style.apply_to(sys.cpus().len()));
     println!();
 
     let mut cpu_benchmark = CPUBenchmark::new(1, num_calculations, num_iterations);
