@@ -4,6 +4,8 @@ use indicatif::{DecimalBytes, HumanBytes, HumanCount, HumanDuration, ProgressBar
 use std::io::{BufWriter, Write, BufReader, Read};
 use std::time::{Duration, Instant};
 use console::Style;
+use crate::win32;
+use crate::win32::Win32;
 
 pub struct DiskBenchmark {
     path: String,
@@ -19,6 +21,12 @@ impl DiskBenchmark {
         if self.delete_temp_file() {
             self.run_write();
             println!();
+
+            if !Win32::clear_standby_list()
+            {
+                println!("Unable to clear file cache. Result may not be accurate.");
+            }
+
             thread::sleep(Duration::from_secs(5));
             self.run_read();
             self.delete_temp_file();

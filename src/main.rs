@@ -1,7 +1,8 @@
 mod cpu_benchmark;
 mod disk_benchmark;
+mod win32;
 
-use std::env;
+use std::{env, mem};
 use std::io::{Read};
 use std::path::Path;
 use std::thread::available_parallelism;
