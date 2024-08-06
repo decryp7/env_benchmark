@@ -4,9 +4,11 @@ mod disk_benchmark;
 mod win32;
 
 use std::{env, mem};
+use std::hint::black_box;
 use std::io::{Read};
 use std::path::Path;
 use std::thread::available_parallelism;
+use std::time::Instant;
 use console::{Style};
 use parse_size::parse_size;
 use sysinfo::{System};
@@ -14,7 +16,7 @@ use crate::cpu_benchmark::CPUBenchmark;
 use crate::disk_benchmark::DiskBenchmark;
 
 fn main() {
-    let num_calculations = 100_000_000;
+    let num_calculations = 20;
     let num_iterations = 5;
 
     let mut sys = System::new_all();
@@ -29,6 +31,10 @@ fn main() {
     println!("{:<30}{:<10}", "Number of CPU threads:", system_info_style.apply_to(sys.cpus().len()));
     println!();
 
+    // let now = Instant::now();
+    // let mut result = CPUBenchmark::fibonacci(50);
+    // println!("{} in {}.", result, now.elapsed().as_secs());
+
     let mut cpu_benchmark = CPUBenchmark::new(1, num_calculations, num_iterations);
     cpu_benchmark.run();
     println!();
@@ -38,9 +44,9 @@ fn main() {
     cpu_benchmark.run();
     println!();
 
-    let disk_benchmark = DiskBenchmark::new(Path::new(env::temp_dir()
-        .as_os_str()).join("disk.benchmark").to_str().unwrap().to_string(),
-                                            parse_size("5 GB").unwrap());
+    let disk_benchmark = DiskBenchmark::new(Path::new(env::temp_dir().as_os_str())
+                                                .join("disk.benchmark").to_str().unwrap().to_string(),
+                                            parse_size("4 GB").unwrap());
     disk_benchmark.run();
     println!();
 

@@ -1,7 +1,7 @@
 use std::{cmp, env, fs, thread};
 use std::fs::metadata;
 use indicatif::{DecimalBytes, HumanBytes, HumanCount, HumanDuration, ProgressBar, ProgressStyle};
-use std::io::{BufWriter, Write, BufReader, Read};
+use std::io::{BufWriter, Write, BufReader, Read, BufRead};
 use std::time::{Duration, Instant};
 use console::Style;
 
@@ -60,22 +60,21 @@ impl DiskBenchmark {
             .progress_chars("##-"));
         bar.inc(0);
 
-        let random_bytes: Vec<u8> = (0..1024)
-            .map(|_| { rand::random::<u8>() })
-            .collect();
+        const BUF_SIZE: usize = 8 * 1024;
+        let random_bytes: Vec<u8> = vec![1; BUF_SIZE];
 
         let now = Instant::now();
         let mut remaining_size = self.size;
-        let mut f = BufWriter::new(fs::File::create(&self.path)
+        let mut f = BufWriter::with_capacity(BUF_SIZE, fs::File::create(&self.path)
             .unwrap());
         while remaining_size > 0 {
             f.write(&random_bytes).unwrap();
-            if remaining_size >= 1024 {
-                remaining_size -= 1024;
+            if remaining_size >= BUF_SIZE as u64 {
+                remaining_size -= BUF_SIZE as u64;
             }else {
                 remaining_size = 0;
             }
-            bar.inc(1024);
+            bar.inc(BUF_SIZE as u64);
         }
 
         bar.finish();
@@ -86,6 +85,7 @@ impl DiskBenchmark {
     }
 
     fn run_read(&self) {
+        const BUF_SIZE: usize = 1000 * 1024;
         let value_style = Style::new().bright().red().bold();
         let bar = ProgressBar::new(self.size)
             .with_message(format!("Reading {} of size {}...",
@@ -96,14 +96,14 @@ impl DiskBenchmark {
             .progress_chars("##-"));
         bar.inc(0);
 
-        let mut content = [0; 1024];
+        let mut read_data =  vec![0; BUF_SIZE];
         let now = Instant::now();
-        let mut f = BufReader::new(fs::File::open(&self.path)
+        let mut f = BufReader::with_capacity(BUF_SIZE, fs::File::open(&self.path)
             .unwrap());
-        let mut size = f.read(&mut content).unwrap();
+        let mut size = f.read(read_data.as_mut_slice()).unwrap();
         while size > 0 {
             bar.inc(size as u64);
-            size = f.read(&mut content).unwrap();
+            size = f.read(read_data.as_mut_slice()).unwrap();
         }
 
         bar.finish();

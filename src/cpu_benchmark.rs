@@ -16,13 +16,17 @@ impl CPUBenchmark {
         Self { num_cpu_cores, num_calculations, num_iterations}
     }
 
-    fn factorial(num: u128) -> u128 {
-        (1..=num).product()
+    pub fn fibonacci(n: u128) -> u128 {
+        match n {
+            0 => 1,
+            1 => 1,
+            _ => Self::fibonacci(n - 1) + Self::fibonacci(n - 2),
+        }
     }
 
     fn add_one_loop(&n_loops: &u64) {
         for _in in 0..n_loops {
-            let _ = CPUBenchmark::factorial(20);
+            Self::fibonacci(50);
         }
     }
 
