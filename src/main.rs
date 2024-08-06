@@ -38,7 +38,7 @@ fn main() {
 
     let disk_benchmark = DiskBenchmark::new(Path::new(env::temp_dir()
         .as_os_str()).join("disk.benchmark").to_str().unwrap().to_string(),
-                                            parse_size("4 GB").unwrap());
+                                            parse_size("1 GB").unwrap());
     disk_benchmark.run();
     println!();
 

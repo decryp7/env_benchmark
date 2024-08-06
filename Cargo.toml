@@ -8,6 +8,7 @@ console = "0.15.8"
 indicatif = "0.17.8"
 parse-size = "1.0.0"
 sysinfo = "0.31.2"
+rand = "0.9.0-alpha.2"
 
 [profile.dev]
 incremental = true # Compile your binary in smaller steps.

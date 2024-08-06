@@ -1,3 +1,4 @@
+use std::thread;
 use std::time::{Duration, Instant};
 use console::Style;
 use indicatif::{HumanCount, HumanDuration, HumanFloatCount, ProgressBar, ProgressStyle};
@@ -62,6 +63,8 @@ impl CPUBenchmark {
                  value_style.apply_to(HumanDuration(Duration::from_secs(elapsed.as_secs()))));
         println!("Calculations per second: {} cps.",
                  value_style.apply_to(HumanFloatCount(calculations_per_sec.round())));
+
+        thread::spawn(Duration::from_secs(5));
     }
 }
 

@@ -19,6 +19,7 @@ impl DiskBenchmark {
         if self.delete_temp_file() {
             self.run_write();
             println!();
+            thread::sleep(Duration::from_secs(5));
             self.run_read();
             self.delete_temp_file();
         }else{
@@ -52,17 +53,16 @@ impl DiskBenchmark {
             .progress_chars("##-"));
         bar.inc(0);
 
-        let mut content = [0; 1024];
-        for i in 0..content.len() {
-            content[i]  = 1;
-        }
+        let random_bytes: Vec<u8> = (0..1024)
+            .map(|_| { rand::random::<u8>() })
+            .collect();
 
         let now = Instant::now();
         let mut remaining_size = self.size;
         let mut f = BufWriter::new(fs::File::create(&self.path)
             .unwrap());
         while(remaining_size > 0) {
-            f.write(&content).unwrap();
+            f.write(&random_bytes).unwrap();
             if remaining_size >= 1024 {
                 remaining_size -= 1024;
             }else {
