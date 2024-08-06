@@ -4,8 +4,6 @@ use indicatif::{DecimalBytes, HumanBytes, HumanCount, HumanDuration, ProgressBar
 use std::io::{BufWriter, Write, BufReader, Read};
 use std::time::{Duration, Instant};
 use console::Style;
-use crate::win32;
-use crate::win32::Win32;
 
 pub struct DiskBenchmark {
     path: String,
@@ -22,7 +20,8 @@ impl DiskBenchmark {
             self.run_write();
             println!();
 
-            if !Win32::clear_standby_list()
+            #[cfg(target_os = "windows")]
+            if !crate::win32::Win32::clear_standby_list()
             {
                 println!("Unable to clear file cache. Result may not be accurate.");
             }
@@ -69,7 +68,7 @@ impl DiskBenchmark {
         let mut remaining_size = self.size;
         let mut f = BufWriter::new(fs::File::create(&self.path)
             .unwrap());
-        while(remaining_size > 0) {
+        while remaining_size > 0 {
             f.write(&random_bytes).unwrap();
             if remaining_size >= 1024 {
                 remaining_size -= 1024;
@@ -102,7 +101,7 @@ impl DiskBenchmark {
         let mut f = BufReader::new(fs::File::open(&self.path)
             .unwrap());
         let mut size = f.read(&mut content).unwrap();
-        while(size > 0) {
+        while size > 0 {
             bar.inc(size as u64);
             size = f.read(&mut content).unwrap();
         }

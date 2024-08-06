@@ -1,5 +1,6 @@
 mod cpu_benchmark;
 mod disk_benchmark;
+#[cfg(target_os = "windows")]
 mod win32;
 
 use std::{env, mem};
