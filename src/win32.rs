@@ -38,6 +38,7 @@ pub struct Win32 {
 
 impl Win32 {
     fn adjust_process_privilege() -> i32 {
+        //https://github.com/trickster0/OffensiveRust/blob/master/EnableDebugPrivileges/src/main.rs
         unsafe{
             let mut h_token: HANDLE = 0 as _;
             OpenProcessToken(GetCurrentProcess(),TOKEN_ADJUST_PRIVILEGES | TOKEN_QUERY,&mut h_token);
@@ -63,9 +64,6 @@ impl Win32 {
         );
         return result == 0;
     }
-
-    #[cfg(not(target_os = "windows"))]
-    pub fn clear_standby_list() {}
 
     fn nt_set_system_information(system_information_class: SYSTEM_INFORMATION_CLASS,
                                      system_information: PVOID,
