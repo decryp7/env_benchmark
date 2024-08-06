@@ -64,7 +64,7 @@ impl CPUBenchmark {
         println!("Calculations per second: {} cps.",
                  value_style.apply_to(HumanFloatCount(calculations_per_sec.round())));
 
-        thread::spawn(Duration::from_secs(5));
+        thread::sleep(Duration::from_secs(5));
     }
 }
 
