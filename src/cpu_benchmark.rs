@@ -175,9 +175,9 @@ impl CPUBenchmark {
     }
 
     pub fn run(&self){
-        self.single_thread_run();
-        println!();
-        thread::sleep(Duration::from_secs(5));
+        // self.single_thread_run();
+        // println!();
+        // thread::sleep(Duration::from_secs(5));
 
         self.multithread_run();
     }
