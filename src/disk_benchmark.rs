@@ -50,7 +50,7 @@ impl DiskBenchmark {
     }
 
     fn run_write(&self){
-        let value_style = Style::new().bright().red().bold();
+        let value_style = Style::new().bright().green().bold().underlined();
         let bar = ProgressBar::new(self.size)
             .with_message(format!("Writing {} of size {}...",
                                   self.path,
@@ -86,7 +86,7 @@ impl DiskBenchmark {
 
     fn run_read(&self) {
         const BUF_SIZE: usize = 1000 * 1024;
-        let value_style = Style::new().bright().red().bold();
+        let value_style = Style::new().bright().green().bold().underlined();
         let bar = ProgressBar::new(self.size)
             .with_message(format!("Reading {} of size {}...",
                                   self.path,

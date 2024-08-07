@@ -73,7 +73,7 @@ impl CPUBenchmark {
     }
 
     pub fn run(&self){
-        let value_style = Style::new().bright().red().bold();
+        let value_style = Style::new().bright().green().bold().underlined();
 
         let bar = ProgressBar::new_spinner()
             .with_message(format!("Running PI calculation with precision {}",self.precision));
