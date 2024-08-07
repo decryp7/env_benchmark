@@ -32,15 +32,10 @@ fn main() {
     println!();
 
     // let now = Instant::now();
-    // let mut result = CPUBenchmark::chudnovsky(1000).unwrap();
+    // let mut result = CPUBenchmark::chudnovsky(5000).unwrap();
     // println!("{} in {}.", result.to_decimal().value(), now.elapsed().as_secs());
 
-    let mut cpu_benchmark = CPUBenchmark::new(1, num_calculations, num_iterations);
-    cpu_benchmark.run();
-    println!();
-
-    let available_cores: u64 = available_parallelism().unwrap().get() as u64;
-    cpu_benchmark = CPUBenchmark::new(available_cores, num_calculations, num_iterations);
+    let cpu_benchmark = CPUBenchmark::new(5000);
     cpu_benchmark.run();
     println!();
 
@@ -50,6 +45,7 @@ fn main() {
     disk_benchmark.run();
     println!();
 
+    println!("Benchmark completed!");
     let term = console::Term::stdout();
     let mut character = term.read_char().unwrap();
     while character != 'q' {
