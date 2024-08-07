@@ -126,10 +126,11 @@ impl CPUBenchmark {
                     while self.remaining_calculations.load(Ordering::Acquire) > 0 {
                         self.remaining_calculations.fetch_sub(1, Ordering::Acquire);
                         let now = Instant::now();
-                        Self::chudnovsky(self.precision).unwrap().to_decimal().value();
-                        println!("[Thread {:?}] Remaining calculations: {}. {}s",thread::current().id(),
+                        let s = Self::chudnovsky(self.precision).unwrap().to_decimal().value();
+                        println!("[Thread {:?}] Remaining calculations: {}. {}s {}",thread::current().id(),
                                  self.remaining_calculations.load(Ordering::Acquire),
-                        now.elapsed().as_secs());
+                        now.elapsed().as_secs(),
+                        s);
                     }
                 }));
             }
