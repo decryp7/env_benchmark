@@ -89,8 +89,7 @@ impl CPUBenchmark {
         bar.finish_with_message(format!("Total runtime: {}",
                                 value_style
                                     .apply_to(HumanDuration(Duration::from_secs(elapsed.as_secs())))));
-
-        let elapsed = now.elapsed();
+        println!();
 
         thread::sleep(Duration::from_secs(5));
     }
