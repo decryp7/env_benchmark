@@ -4,6 +4,7 @@ mod disk_benchmark;
 mod win32;
 
 use std::{env, mem, thread};
+use std::fs::metadata;
 use std::hint::black_box;
 use std::io::{Read};
 use std::path::Path;
@@ -31,6 +32,9 @@ struct Args {
 
     #[arg(short, long, default_value = "4GB")]
     filesize: String,
+
+    #[arg(short, long, default_value_t = env::temp_dir().into_os_string().into_string().unwrap())]
+    temp_file_directory: String
 }
 
 fn main() {
@@ -40,12 +44,18 @@ fn main() {
     let num_iterations = (args.iterations > 0).then(|| args.iterations).or_else(|| Some(5)).unwrap();
     let precision = (args.pi_precision > 0).then(|| args.pi_precision).or_else(|| Some(3000)).unwrap() as usize;
     let mut file_size = parse_size("4GB").unwrap();
+    let mut file_path = env::temp_dir().into_os_string().into_string().unwrap();
 
     match parse_size(args.filesize) {
         Ok(f) => {
             file_size = f;
         }
         Err(_) => {}
+    }
+
+    let metadata = metadata(&args.temp_file_directory);
+    if metadata.is_ok() && metadata.unwrap().is_dir() {
+        file_path = args.temp_file_directory;
     }
 
     let mut sys = System::new_all();
@@ -74,7 +84,7 @@ fn main() {
     cpu_benchmark.run();
     println!();
 
-    let disk_benchmark = DiskBenchmark::new(Path::new(env::temp_dir().as_os_str())
+    let disk_benchmark = DiskBenchmark::new(Path::new(&file_path)
                                                 .join("disk.benchmark").to_str().unwrap().to_string(),
                                             file_size,
                                             num_iterations);
