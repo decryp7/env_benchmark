@@ -97,7 +97,7 @@ impl DiskBenchmark {
                                   self.path,
                                   DecimalBytes(self.size),
                                 self.num_iterations));
-        bar.set_style(ProgressStyle::with_template("{msg} [{elapsed}]\n{wide_bar:.cyan/blue} {decimal_bytes}/{decimal_total_bytes}")
+        bar.set_style(ProgressStyle::with_template("{msg} [{elapsed}]\n{wide_bar:.cyan/blue} {pos}/{len}")
             .unwrap()
             .progress_chars("##-"));
         bar.enable_steady_tick(Duration::from_secs(1));
