@@ -1,3 +1,5 @@
+use std::sync::Arc;
+use std::sync::atomic::{AtomicU32, Ordering};
 use std::thread;
 use std::time::{Duration, Instant};
 use console::Style;
@@ -6,15 +8,26 @@ use color_eyre::eyre::{Report, Result};
 use dashu::base::SquareRoot;
 use dashu::float::FBig;
 use dashu::integer::IBig;
+use sysinfo::System;
 
 pub struct CPUBenchmark {
+    num_cpu_threads: usize,
     precision: usize,
-    num_iterations: i32,
+    num_iterations: u32,
+    num_calculations: u32,
+    remaining_calculations: AtomicU32,
 }
 
 impl CPUBenchmark {
-    pub fn new(precision: usize, num_iterations: i32) -> CPUBenchmark {
-        Self { precision, num_iterations }
+    pub fn new(num_cpu_threads: usize,
+                precision: usize,
+               num_iterations: u32,
+               num_calculations: u32) -> CPUBenchmark {
+        Self {num_cpu_threads, 
+            precision, 
+            num_iterations, 
+            num_calculations,
+            remaining_calculations: AtomicU32::new(0)}
     }
 
     fn binary_split(a: u32, b: u32) -> (IBig, IBig, IBig) {
@@ -73,13 +86,13 @@ impl CPUBenchmark {
         Ok(((i1 * i2.sqrt() * q1n) / r1n).into())
     }
 
-    pub fn run(&self){
+    pub fn single_thread_run(&self){
         let value_style = Style::new().bright().green().bold().underlined();
 
         let bar = ProgressBar::new(self.num_iterations as u64)
             .with_message(format!("Running PI calculation with precision {} for {} times",
                                   self.precision,
-                                    self.num_iterations));
+                                  self.num_iterations));
         bar.set_style(ProgressStyle::with_template("{msg} [{elapsed}]\n{wide_bar:.cyan/blue} {pos}/{len}")
             .unwrap()
             .progress_chars("##-"));
@@ -97,12 +110,72 @@ impl CPUBenchmark {
         bar.finish();
         let average= measurements.iter().sum::<u128>() / self.num_iterations as u128;
 
-        println!("PI calculation with precision {} took {} on average.",
-                                self.precision,
-                                value_style
-                                    .apply_to(HumanDuration(Duration::from_millis(average as u64))));
+        println!("PI calculation (single thread) with precision {} took {} on average.",
+                 self.precision,
+                 value_style
+                     .apply_to(HumanDuration(Duration::from_millis(average as u64))));
+    }
 
+    fn multithread_one_iteration(&self) {
+        let s = Arc::new(self);
+
+        let mut threads = Vec::new();
+        let mut results = Vec::new();
+
+        for _ in 0..self.num_cpu_threads {
+            let s_clone = s.clone();
+            threads.push(thread::spawn(move || {
+                while s_clone.remaining_calculations.load(Ordering::Relaxed) > 0 {
+                    s_clone.remaining_calculations.fetch_sub(1, Ordering::Relaxed);
+                    Self::chudnovsky(s_clone.precision).unwrap().to_decimal().value();
+                }
+            }));
+        }
+
+        for thread in threads {
+            results.extend(thread.join());
+        }
+    }
+
+    pub fn multithread_run(&self){
+        self.remaining_calculations.store(self.num_calculations, Ordering::Relaxed);
+        
+        let value_style = Style::new().bright().green().bold().underlined();
+        let bar = ProgressBar::new(self.num_iterations as u64)
+            .with_message(format!("Running {} PI calculations with precision {} for {} times",
+                                  self.num_calculations,
+                                  self.precision,
+                                  self.num_iterations));
+        bar.set_style(ProgressStyle::with_template("{msg} [{elapsed}]\n{wide_bar:.cyan/blue} {pos}/{len}")
+            .unwrap()
+            .progress_chars("##-"));
+        bar.enable_steady_tick(Duration::from_secs(1));
+        bar.inc(0);
+
+        let mut measurements = vec![0; self.num_iterations as usize];
+        for _ in 0..self.num_iterations {
+            let now = Instant::now();
+            self.multithread_one_iteration();
+            let elapsed = now.elapsed();
+            measurements.push(elapsed.as_millis());
+            bar.inc(1);
+        }
+        bar.finish();
+        let average= measurements.iter().sum::<u128>() / self.num_iterations as u128;
+
+        println!("{} PI calculations with precision {} took {} on average.",
+                 self.num_calculations,
+                 self.precision,
+                 value_style
+                     .apply_to(HumanDuration(Duration::from_millis(average as u64))));
+    }
+
+    pub fn run(&self){
+        self.single_thread_run();
+        println!();
         thread::sleep(Duration::from_secs(5));
+
+        self.multithread_run();
     }
 }
 

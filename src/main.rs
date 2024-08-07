@@ -16,7 +16,7 @@ use crate::cpu_benchmark::CPUBenchmark;
 use crate::disk_benchmark::DiskBenchmark;
 
 fn main() {
-    let num_calculations = 1000;
+    let num_calculations = 100;
     let num_iterations = 5;
 
     let mut sys = System::new_all();
@@ -31,18 +31,17 @@ fn main() {
     println!("{:<30}{:<10}", "Number of CPU threads:", system_info_style.apply_to(sys.cpus().len()));
     println!();
 
-    // let now = Instant::now();
-    // let mut result = CPUBenchmark::chudnovsky(5000).unwrap();
-    // println!("{} in {}.", result.to_decimal().value(), now.elapsed().as_secs());
-
-    let cpu_benchmark = CPUBenchmark::new(3000, 5);
+    let cpu_benchmark = CPUBenchmark::new(sys.cpus().len(),
+                                          3000,
+                                          num_iterations,
+                                          num_calculations);
     cpu_benchmark.run();
     println!();
 
     let disk_benchmark = DiskBenchmark::new(Path::new(env::temp_dir().as_os_str())
                                                 .join("disk.benchmark").to_str().unwrap().to_string(),
                                             parse_size("4 GB").unwrap(),
-                                5);
+                                            num_iterations);
     disk_benchmark.run();
     println!();
 
