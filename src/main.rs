@@ -19,7 +19,7 @@ use crate::disk_benchmark::DiskBenchmark;
 fn main() {
     let num_calculations = 20;
     let num_iterations = 5;
-    let precision = 5000;
+    let precision = 3000;
 
     let mut sys = System::new_all();
     sys.refresh_all();
