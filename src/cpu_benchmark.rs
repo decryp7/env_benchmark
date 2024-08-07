@@ -126,8 +126,8 @@ impl CPUBenchmark {
                     while self.remaining_calculations.load(Ordering::Acquire) > 0 {
                         self.remaining_calculations.fetch_sub(1, Ordering::Acquire);
                         Self::chudnovsky(self.precision).unwrap().to_decimal().value();
-                        println!("[Thread {:?}] Remaining calculations: {}.",thread::current().id(),
-                                 self.remaining_calculations.load(Ordering::Acquire));
+                        // println!("[Thread {:?}] Remaining calculations: {}.",thread::current().id(),
+                        //          self.remaining_calculations.load(Ordering::Acquire));
                     }
                 }));
             }
