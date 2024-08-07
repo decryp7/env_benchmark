@@ -3,10 +3,11 @@ mod disk_benchmark;
 #[cfg(target_os = "windows")]
 mod win32;
 
-use std::{env, mem};
+use std::{env, mem, thread};
 use std::hint::black_box;
 use std::io::{Read};
 use std::path::Path;
+use std::sync::Arc;
 use std::thread::available_parallelism;
 use std::time::Instant;
 use console::{Style};
@@ -31,12 +32,18 @@ fn main() {
     println!("{:<30}{:<10}", "Number of CPU threads:", system_info_style.apply_to(sys.cpus().len()));
     println!();
 
-    let cpu_benchmark = CPUBenchmark::new(sys.cpus().len(),
-                                          3000,
-                                          num_iterations,
-                                          num_calculations);
+    let mut cpu_benchmark = Arc::new(CPUBenchmark::new(1,
+                                                   3000,
+                                                   num_iterations,
+                                                   1));
     cpu_benchmark.run();
     println!();
+
+    cpu_benchmark = Arc::new(CPUBenchmark::new(sys.cpus().len(),
+                                                3000,
+                                                num_iterations,
+                                                num_calculations));
+    cpu_benchmark.run();
 
     let disk_benchmark = DiskBenchmark::new(Path::new(env::temp_dir().as_os_str())
                                                 .join("disk.benchmark").to_str().unwrap().to_string(),
