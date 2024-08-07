@@ -72,30 +72,25 @@ impl CPUBenchmark {
         Ok(((i1 * i2.sqrt() * q1n) / r1n).into())
     }
 
-    fn add_one_loop(&n_loops: &u64) {
-        for _in in 0..n_loops {
-            Self::chudnovsky(500).unwrap().to_decimal().value();
-        }
-    }
-
     pub fn run(&self){
         let value_style = Style::new().bright().red().bold();
 
         let bar = ProgressBar::new_spinner()
             .with_message(format!("Running PI calculation with precision {}",self.precision));
-        bar.set_style(ProgressStyle::with_template("{spinner} {msg} [{elapsed}]")
+        bar.set_style(ProgressStyle::with_template("{msg} [{elapsed}] {spinner}")
             .unwrap());
-        bar.enable_steady_tick(Duration::from_secs(1));
+        bar.enable_steady_tick(Duration::from_millis(300));
         bar.inc(0);
 
         let now = Instant::now();
         Self::chudnovsky(self.precision).unwrap().to_decimal().value();
-        bar.finish();
-
         let elapsed = now.elapsed();
 
-        println!("Total runtime: {}",
-                 value_style.apply_to(HumanDuration(Duration::from_secs(elapsed.as_secs()))));
+        bar.finish_with_message(format!("Total runtime: {}",
+                                value_style
+                                    .apply_to(HumanDuration(Duration::from_secs(elapsed.as_secs())))));
+
+        let elapsed = now.elapsed();
 
         thread::sleep(Duration::from_secs(5));
     }
