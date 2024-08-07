@@ -10,16 +10,43 @@ use std::path::Path;
 use std::sync::Arc;
 use std::thread::available_parallelism;
 use std::time::Instant;
+use clap::{arg, Arg, Parser};
 use console::{Style};
-use parse_size::parse_size;
+use parse_size::{parse_size, Error};
 use sysinfo::{System};
 use crate::cpu_benchmark::CPUBenchmark;
 use crate::disk_benchmark::DiskBenchmark;
 
+#[derive(Parser, Debug)]
+#[command(version, about, long_about = None)]
+struct Args {
+    #[arg(short, long, default_value_t = 20)]
+    num_calculations: u32,
+
+    #[arg(short, long, default_value_t = 5)]
+    iterations: u32,
+
+    #[arg(short, long, default_value_t = 3000)]
+    pi_precision: u32,
+
+    #[arg(short, long, default_value = "4GB")]
+    filesize: String,
+}
+
 fn main() {
-    let num_calculations = 20;
-    let num_iterations = 5;
-    let precision = 3000;
+    let args = Args::parse();
+
+    let num_calculations = (args.num_calculations > 0).then(|| args.num_calculations).or_else(|| Some(20)).unwrap();
+    let num_iterations = (args.iterations > 0).then(|| args.iterations).or_else(|| Some(5)).unwrap();
+    let precision = (args.pi_precision > 0).then(|| args.pi_precision).or_else(|| Some(3000)).unwrap() as usize;
+    let mut file_size = parse_size("4GB").unwrap();
+
+    match parse_size(args.filesize) {
+        Ok(f) => {
+            file_size = f;
+        }
+        Err(_) => {}
+    }
 
     let mut sys = System::new_all();
     sys.refresh_all();
@@ -49,7 +76,7 @@ fn main() {
 
     let disk_benchmark = DiskBenchmark::new(Path::new(env::temp_dir().as_os_str())
                                                 .join("disk.benchmark").to_str().unwrap().to_string(),
-                                            parse_size("4 GB").unwrap(),
+                                            file_size,
                                             num_iterations);
     disk_benchmark.run();
     println!();
