@@ -91,18 +91,23 @@ impl CPUBenchmark {
         self.remaining_calculations.swap(self.num_calculations, Ordering::Acquire);
         let now = Instant::now();
         let mut threads = Vec::new();
-        let s = self.clone();
+        // let counter = Arc::new(AtomicU32::new(0));
 
         for _ in 0..self.num_cpu_threads {
             let s = self.clone();
+            // let c = counter.clone();
             threads.push(thread::spawn(move || {
                 while s.remaining_calculations.load(Ordering::Acquire) > 0 {
                     s.remaining_calculations.fetch_sub(1, Ordering::Acquire);
                     let now = Instant::now();
                     Self::chudnovsky(s.precision).unwrap().to_decimal().value();
-                    // println!("[Thread {:?}] Remaining calculations: {}. Took {}s",thread::current().id(),
+                    // c.fetch_add(1, Ordering::Acquire);
+                    // println!("[Thread {:?}] [Counter {}] Remaining calculations: {}. Took {}s",
+                    //          thread::current().id(),
+                    //          c.load(Ordering::Acquire),
                     //          s.remaining_calculations.load(Ordering::Acquire),
                     //          now.elapsed().as_secs());
+                    // println!();
                 }
             }));
         }
