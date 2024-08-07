@@ -19,6 +19,7 @@ use crate::disk_benchmark::DiskBenchmark;
 fn main() {
     let num_calculations = 20;
     let num_iterations = 5;
+    let precision = 5000;
 
     let mut sys = System::new_all();
     sys.refresh_all();
@@ -33,17 +34,18 @@ fn main() {
     println!();
 
     let mut cpu_benchmark = Arc::new(CPUBenchmark::new(1,
-                                                   3000,
+                                                   precision,
                                                    num_iterations,
                                                    1));
     cpu_benchmark.run();
     println!();
 
     cpu_benchmark = Arc::new(CPUBenchmark::new(sys.cpus().len(),
-                                                3000,
+                                                precision,
                                                 num_iterations,
                                                 num_calculations));
     cpu_benchmark.run();
+    println!();
 
     let disk_benchmark = DiskBenchmark::new(Path::new(env::temp_dir().as_os_str())
                                                 .join("disk.benchmark").to_str().unwrap().to_string(),
