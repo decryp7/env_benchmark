@@ -9,11 +9,12 @@ use dashu::integer::IBig;
 
 pub struct CPUBenchmark {
     precision: usize,
+    num_iterations: i32,
 }
 
 impl CPUBenchmark {
-    pub fn new(precision: usize) -> CPUBenchmark {
-        Self { precision }
+    pub fn new(precision: usize, num_iterations: i32) -> CPUBenchmark {
+        Self { precision, num_iterations }
     }
 
     fn binary_split(a: u32, b: u32) -> (IBig, IBig, IBig) {
@@ -75,22 +76,31 @@ impl CPUBenchmark {
     pub fn run(&self){
         let value_style = Style::new().bright().green().bold().underlined();
 
-        let bar = ProgressBar::new_spinner()
-            .with_message(format!("Running PI calculation with precision {}",self.precision));
-        bar.set_style(ProgressStyle::with_template("{msg} [{elapsed}] {spinner}")
-            .unwrap());
-        bar.enable_steady_tick(Duration::from_millis(300));
+        let bar = ProgressBar::new(self.num_iterations as u64)
+            .with_message(format!("Running PI calculation with precision {} for {} times",
+                                  self.precision,
+                                    self.num_iterations));
+        bar.set_style(ProgressStyle::with_template("{msg} [{elapsed}]\n{wide_bar:.cyan/blue} {pos}/{len}")
+            .unwrap()
+            .progress_chars("##-"));
+        bar.enable_steady_tick(Duration::from_secs(1));
         bar.inc(0);
 
-        let now = Instant::now();
-        Self::chudnovsky(self.precision).unwrap().to_decimal().value();
-        let elapsed = now.elapsed();
+        let mut measurements = vec![0; self.num_iterations as usize];
+        for _ in 0..self.num_iterations {
+            let now = Instant::now();
+            Self::chudnovsky(self.precision).unwrap().to_decimal().value();
+            let elapsed = now.elapsed();
+            measurements.push(elapsed.as_millis());
+            bar.inc(1);
+        }
+        bar.finish();
+        let average= measurements.iter().sum::<u128>() / self.num_iterations as u128;
 
-        bar.finish_with_message(format!("PI calculation with precision {} took {}.",
+        println!("PI calculation with precision {} took {} on average.",
                                 self.precision,
                                 value_style
-                                    .apply_to(HumanDuration(Duration::from_secs(elapsed.as_secs())))));
-        println!();
+                                    .apply_to(HumanDuration(Duration::from_millis(average as u64))));
 
         thread::sleep(Duration::from_secs(5));
     }

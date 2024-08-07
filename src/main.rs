@@ -35,13 +35,14 @@ fn main() {
     // let mut result = CPUBenchmark::chudnovsky(5000).unwrap();
     // println!("{} in {}.", result.to_decimal().value(), now.elapsed().as_secs());
 
-    let cpu_benchmark = CPUBenchmark::new(5000);
+    let cpu_benchmark = CPUBenchmark::new(3000, 5);
     cpu_benchmark.run();
     println!();
 
     let disk_benchmark = DiskBenchmark::new(Path::new(env::temp_dir().as_os_str())
                                                 .join("disk.benchmark").to_str().unwrap().to_string(),
-                                            parse_size("4 GB").unwrap());
+                                            parse_size("4 GB").unwrap(),
+                                5);
     disk_benchmark.run();
     println!();
 
