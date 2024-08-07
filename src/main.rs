@@ -28,7 +28,7 @@ fn main() {
         .unwrap_or(String::from("Unknown"))));
     println!("{:<30}{:<10}", "System kernel version:", system_info_style.apply_to(System::kernel_version()
         .unwrap_or(String::from("Unknown"))));
-    println!("{:<30}{:<10}", "System OS version:", system_info_style.apply_to(System::os_version()
+    println!("{:<30}{:<10}", "System OS version:", system_info_style.apply_to(System::long_os_version()
                 .unwrap_or(String::from("Unknown"))));
     println!("{:<30}{:<10}", "Number of CPU threads:", system_info_style.apply_to(sys.cpus().len()));
     println!();
