@@ -8,11 +8,11 @@ use console::Style;
 pub struct DiskBenchmark {
     path: String,
     size: u64,
-    num_iterations: i32,
+    num_iterations: u32,
 }
 
 impl DiskBenchmark {
-    pub fn new(path: String, size: u64, num_iterations: i32) -> Self {
+    pub fn new(path: String, size: u64, num_iterations: u32) -> Self {
         Self {path, size, num_iterations}
     }
 

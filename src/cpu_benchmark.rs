@@ -117,24 +117,24 @@ impl CPUBenchmark {
     }
 
     fn multithread_one_iteration(&self) {
-        let s = Arc::new(self);
+        thread::scope(|s| {
+            let mut threads = Vec::new();
+            let mut results = Vec::new();
 
-        let mut threads = Vec::new();
-        let mut results = Vec::new();
+            for _ in 0..self.num_cpu_threads {
+                let s_clone = s.clone();
+                threads.push(s.spawn(move || {
+                    while self.remaining_calculations.load(Ordering::Relaxed) > 0 {
+                        self.remaining_calculations.fetch_sub(1, Ordering::Relaxed);
+                        Self::chudnovsky(self.precision).unwrap().to_decimal().value();
+                    }
+                }));
+            }
 
-        for _ in 0..self.num_cpu_threads {
-            let s_clone = s.clone();
-            threads.push(thread::spawn(move || {
-                while s_clone.remaining_calculations.load(Ordering::Relaxed) > 0 {
-                    s_clone.remaining_calculations.fetch_sub(1, Ordering::Relaxed);
-                    Self::chudnovsky(s_clone.precision).unwrap().to_decimal().value();
-                }
-            }));
-        }
-
-        for thread in threads {
-            results.extend(thread.join());
-        }
+            for thread in threads {
+                results.extend(thread.join());
+            }
+        });
     }
 
     pub fn multithread_run(&self){
@@ -171,9 +171,9 @@ impl CPUBenchmark {
     }
 
     pub fn run(&self){
-        self.single_thread_run();
-        println!();
-        thread::sleep(Duration::from_secs(5));
+        // self.single_thread_run();
+        // println!();
+        // thread::sleep(Duration::from_secs(5));
 
         self.multithread_run();
     }
