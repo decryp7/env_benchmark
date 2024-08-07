@@ -139,7 +139,7 @@ impl CPUBenchmark {
     }
 
     pub fn multithread_run(&self){
-        self.remaining_calculations.store(self.num_calculations, Ordering::Relaxed);
+        self.remaining_calculations.swap(self.num_calculations, Ordering::Acquire);
         
         let value_style = Style::new().bright().green().bold().underlined();
         let bar = ProgressBar::new(self.num_iterations as u64)
