@@ -1,7 +1,7 @@
 #[cfg(target_os = "windows")]
 use winres;
 
-#[cfg(target_os = "windows")]
+#[cfg(all(target_os = "windows", not(debug_assertions)))]
 fn main() {
     let mut res = winres::WindowsResource::new();
     res.set_manifest(r#"

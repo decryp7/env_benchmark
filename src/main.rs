@@ -16,7 +16,7 @@ use crate::cpu_benchmark::CPUBenchmark;
 use crate::disk_benchmark::DiskBenchmark;
 
 fn main() {
-    let num_calculations = 20;
+    let num_calculations = 1000;
     let num_iterations = 5;
 
     let mut sys = System::new_all();
@@ -32,8 +32,8 @@ fn main() {
     println!();
 
     // let now = Instant::now();
-    // let mut result = CPUBenchmark::fibonacci(50);
-    // println!("{} in {}.", result, now.elapsed().as_secs());
+    // let mut result = CPUBenchmark::chudnovsky(1000).unwrap();
+    // println!("{} in {}.", result.to_decimal().value(), now.elapsed().as_secs());
 
     let mut cpu_benchmark = CPUBenchmark::new(1, num_calculations, num_iterations);
     cpu_benchmark.run();
