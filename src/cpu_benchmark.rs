@@ -122,11 +122,11 @@ impl CPUBenchmark {
             let mut results = Vec::new();
 
             for _ in 0..self.num_cpu_threads {
-                let s_clone = s.clone();
                 threads.push(s.spawn(move || {
                     while self.remaining_calculations.load(Ordering::Relaxed) > 0 {
                         self.remaining_calculations.fetch_sub(1, Ordering::Relaxed);
                         Self::chudnovsky(self.precision).unwrap().to_decimal().value();
+                        println!("Remaining calculations: {}.", self.remaining_calculations.load(Ordering::Relaxed));
                     }
                 }));
             }
