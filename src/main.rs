@@ -16,7 +16,7 @@ use crate::cpu_benchmark::CPUBenchmark;
 use crate::disk_benchmark::DiskBenchmark;
 
 fn main() {
-    let num_calculations = 100;
+    let num_calculations = 20;
     let num_iterations = 5;
 
     let mut sys = System::new_all();

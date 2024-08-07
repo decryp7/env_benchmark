@@ -123,10 +123,11 @@ impl CPUBenchmark {
 
             for _ in 0..self.num_cpu_threads {
                 threads.push(s.spawn(move || {
-                    while self.remaining_calculations.load(Ordering::Relaxed) > 0 {
-                        self.remaining_calculations.fetch_sub(1, Ordering::Relaxed);
+                    while self.remaining_calculations.load(Ordering::Acquire) > 0 {
+                        self.remaining_calculations.fetch_sub(1, Ordering::Acquire);
                         Self::chudnovsky(self.precision).unwrap().to_decimal().value();
-                        println!("Remaining calculations: {}.", self.remaining_calculations.load(Ordering::Relaxed));
+                        println!("[Thread {:?}] Remaining calculations: {}.",thread::current().id(),
+                                 self.remaining_calculations.load(Ordering::Acquire));
                     }
                 }));
             }
@@ -142,9 +143,10 @@ impl CPUBenchmark {
         
         let value_style = Style::new().bright().green().bold().underlined();
         let bar = ProgressBar::new(self.num_iterations as u64)
-            .with_message(format!("Running {} PI calculations with precision {} for {} times",
+            .with_message(format!("Running {} PI calculations with precision {} on {} threads for {} times",
                                   self.num_calculations,
                                   self.precision,
+                                  self.num_cpu_threads,
                                   self.num_iterations));
         bar.set_style(ProgressStyle::with_template("{msg} [{elapsed}]\n{wide_bar:.cyan/blue} {pos}/{len}")
             .unwrap()
