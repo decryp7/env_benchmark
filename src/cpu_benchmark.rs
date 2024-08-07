@@ -86,7 +86,8 @@ impl CPUBenchmark {
         Self::chudnovsky(self.precision).unwrap().to_decimal().value();
         let elapsed = now.elapsed();
 
-        bar.finish_with_message(format!("Total runtime: {}",
+        bar.finish_with_message(format!("PI calculation with precision {} took {}.",
+                                self.precision,
                                 value_style
                                     .apply_to(HumanDuration(Duration::from_secs(elapsed.as_secs())))));
         println!();
