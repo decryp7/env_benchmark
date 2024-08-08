@@ -34,7 +34,7 @@ struct Args {
     #[arg(short, long, default_value = "4GB")]
     filesize: String,
 
-    #[arg(short, long, default_value = "10MB")]
+    #[arg(short, long, default_value = "100MB")]
     buffer_size: String,
 
     #[arg(short, long, default_value_t = env::temp_dir().into_os_string().into_string().unwrap())]
@@ -48,7 +48,7 @@ fn main() {
     let num_iterations = (args.iterations > 0).then(|| args.iterations).or_else(|| Some(5)).unwrap();
     let precision = (args.pi_precision > 0).then(|| args.pi_precision).or_else(|| Some(3000)).unwrap() as usize;
     let mut file_size = parse_size("4GB").unwrap();
-    let mut buffer_size = parse_size("10MB").unwrap();
+    let mut buffer_size = parse_size("100MB").unwrap();
     let mut file_path = env::temp_dir().into_os_string().into_string().unwrap();
 
     match parse_size(args.filesize) {
