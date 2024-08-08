@@ -32,17 +32,17 @@ impl OpenOptionsExt for OpenOptions {
     }
 }
 
-const BUF_SIZE: usize = 64 * 1000;
-
 pub struct DiskBenchmark {
     path: String,
     size: u64,
     num_iterations: u32,
+    buffer_size: usize,
 }
 
 impl DiskBenchmark {
-    pub fn new(path: String, size: u64, num_iterations: u32) -> Self {
-        Self {path, size, num_iterations}
+    pub fn new(path: String, size: u64, num_iterations: u32, buffer_size: u64) -> Self {
+        let bs = buffer_size - buffer_size % 2;
+        Self {path, size, num_iterations, buffer_size: bs as usize}
     }
 
     pub fn run(&self){
@@ -81,7 +81,7 @@ impl DiskBenchmark {
         bar.enable_steady_tick(Duration::from_secs(1));
         bar.inc(0);
 
-        let random_bytes: Vec<u8> = vec![1; BUF_SIZE];
+        let random_bytes: Vec<u8> = vec![1; self.buffer_size];
         let mut total_elapsed = 0u64;
 
         for _ in 0..self.num_iterations {
@@ -104,8 +104,8 @@ impl DiskBenchmark {
             let mut remaining_size = self.size;
             while remaining_size > 0 {
                 file.write_all(&random_bytes).unwrap();
-                if remaining_size >= BUF_SIZE as u64 {
-                    remaining_size -= BUF_SIZE as u64;
+                if remaining_size >= self.buffer_size as u64 {
+                    remaining_size -= self.buffer_size as u64;
                 } else {
                     remaining_size = 0;
                 }
@@ -134,7 +134,7 @@ impl DiskBenchmark {
         bar.enable_steady_tick(Duration::from_secs(1));
         bar.inc(0);
 
-        let mut read_data =  vec![0; BUF_SIZE];
+        let mut read_data =  vec![0; self.buffer_size];
         let mut total_elapsed = 0u64;
 
         for _ in 0..self.num_iterations {

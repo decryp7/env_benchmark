@@ -34,6 +34,9 @@ struct Args {
     #[arg(short, long, default_value = "4GB")]
     filesize: String,
 
+    #[arg(short, long, default_value = "10MB")]
+    buffer_size: String,
+
     #[arg(short, long, default_value_t = env::temp_dir().into_os_string().into_string().unwrap())]
     temp_file_directory: String
 }
@@ -45,11 +48,19 @@ fn main() {
     let num_iterations = (args.iterations > 0).then(|| args.iterations).or_else(|| Some(5)).unwrap();
     let precision = (args.pi_precision > 0).then(|| args.pi_precision).or_else(|| Some(3000)).unwrap() as usize;
     let mut file_size = parse_size("4GB").unwrap();
+    let mut buffer_size = parse_size("10MB").unwrap();
     let mut file_path = env::temp_dir().into_os_string().into_string().unwrap();
 
     match parse_size(args.filesize) {
         Ok(f) => {
             file_size = f;
+        }
+        Err(_) => {}
+    }
+
+    match parse_size(args.buffer_size) {
+        Ok(f) => {
+            buffer_size = f;
         }
         Err(_) => {}
     }
@@ -89,7 +100,8 @@ fn main() {
     let disk_benchmark = DiskBenchmark::new(Path::new(&file_path)
                                                 .join("disk.benchmark").to_str().unwrap().to_string(),
                                             file_size,
-                                            num_iterations);
+                                            num_iterations,
+                                            buffer_size);
     disk_benchmark.run();
     println!();
 
