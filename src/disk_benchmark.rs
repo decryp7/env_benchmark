@@ -1,9 +1,35 @@
 use std::{cmp, env, fs, thread};
-use std::fs::metadata;
+use std::fs::{metadata, OpenOptions};
 use indicatif::{DecimalBytes, HumanBytes, HumanCount, HumanDuration, ProgressBar, ProgressStyle};
 use std::io::{BufWriter, Write, BufReader, Read, BufRead};
 use std::time::{Duration, Instant};
 use console::Style;
+
+trait OpenOptionsExt {
+    fn disable_buffering(&mut self) -> &mut Self;
+}
+
+const O_DIRECT: i32 = 0o0040000;
+
+impl OpenOptionsExt for OpenOptions {
+    #[cfg(target_os = "linux")]
+    fn disable_buffering(&mut self) -> &mut Self {
+        use std::os::unix::fs::OpenOptionsExt;
+        self.custom_flags(O_DIRECT)
+    }
+
+    #[cfg(target_os = "macos")]
+    fn disable_buffering(&mut self) -> &mut Self {
+        use std::os::unix::fs::OpenOptionsExt;
+        self.custom_flags(O_DIRECT)
+    }
+
+    #[cfg(windows)]
+    fn disable_buffering(&mut self) -> &mut Self {
+        use std::os::windows::fs::OpenOptionsExt;
+        self.custom_flags(winapi::um::winbase::FILE_FLAG_NO_BUFFERING)
+    }
+}
 
 pub struct DiskBenchmark {
     path: String,
@@ -66,10 +92,16 @@ impl DiskBenchmark {
 
             self.delete_temp_file();
 
+            let file = OpenOptions::new()
+                .write(true)
+                .create(true)
+                .disable_buffering()
+                .open(&self.path)
+                .unwrap();
+
             let now = Instant::now();
             let mut remaining_size = self.size;
-            let mut f = BufWriter::with_capacity(BUF_SIZE, fs::File::create(&self.path)
-                .unwrap());
+            let mut f = BufWriter::with_capacity(BUF_SIZE, file);
             while remaining_size > 0 {
                 f.write(&random_bytes).unwrap();
                 if remaining_size >= BUF_SIZE as u64 {
@@ -114,8 +146,14 @@ impl DiskBenchmark {
             }
 
             let now = Instant::now();
-            let mut f = BufReader::with_capacity(BUF_SIZE, fs::File::open(&self.path)
-                .unwrap());
+
+            let file = OpenOptions::new()
+                .read(true)
+                .disable_buffering()
+                .open(&self.path)
+                .unwrap();
+
+            let mut f = BufReader::with_capacity(BUF_SIZE, file);
             let mut size = f.read(read_data.as_mut_slice()).unwrap();
             while size > 0 {
                 size = f.read(read_data.as_mut_slice()).unwrap();
