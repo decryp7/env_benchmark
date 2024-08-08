@@ -32,6 +32,8 @@ impl OpenOptionsExt for OpenOptions {
     }
 }
 
+const BUF_SIZE: usize = 100 * 1000 * 1024;
+
 pub struct DiskBenchmark {
     path: String,
     size: u64,
@@ -79,8 +81,6 @@ impl DiskBenchmark {
         bar.enable_steady_tick(Duration::from_secs(1));
         bar.inc(0);
 
-
-        const BUF_SIZE: usize = 1 * 1000 * 1024;
         let random_bytes: Vec<u8> = vec![1; BUF_SIZE];
         let mut total_elapsed = 0u64;
 
@@ -103,7 +103,7 @@ impl DiskBenchmark {
             let now = Instant::now();
             let mut remaining_size = self.size;
             while remaining_size > 0 {
-                file.write(&random_bytes).unwrap();
+                file.write_all(&random_bytes).unwrap();
                 if remaining_size >= BUF_SIZE as u64 {
                     remaining_size -= BUF_SIZE as u64;
                 } else {
@@ -122,7 +122,6 @@ impl DiskBenchmark {
     }
 
     fn run_read(&self) {
-        const BUF_SIZE: usize = 1 * 1000 * 1024;
         let value_style = Style::new().bright().green().bold().underlined();
         let bar = ProgressBar::new(self.num_iterations as u64)
             .with_message(format!("Reading {} of size {} {} times...",
