@@ -41,15 +41,13 @@ pub struct DiskBenchmark {
 
 impl DiskBenchmark {
     pub fn new(path: String, size: u64, num_iterations: u32, buffer_size: u64) -> Self {
-        let bs = buffer_size - buffer_size % 2;
+        let bs = buffer_size - buffer_size % 1024;
         Self {path, size, num_iterations, buffer_size: bs as usize}
     }
 
     pub fn run(&self){
         self.run_write();
         println!();
-
-        thread::sleep(Duration::from_secs(5));
         self.run_read();
     }
 

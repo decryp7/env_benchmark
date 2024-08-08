@@ -148,8 +148,6 @@ impl CPUBenchmark {
                  self.precision,
                  value_style
                      .apply_to(HumanDuration(Duration::from_millis(average as u64))));
-
-        thread::sleep(Duration::from_secs(5));
     }
 }
 
