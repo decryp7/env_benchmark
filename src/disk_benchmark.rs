@@ -32,7 +32,7 @@ impl OpenOptionsExt for OpenOptions {
     }
 }
 
-const BUF_SIZE: usize = 10 * 1000 * 1024;
+const BUF_SIZE: usize = 64 * 1000;
 
 pub struct DiskBenchmark {
     path: String,
