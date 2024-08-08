@@ -13,6 +13,7 @@ use std::thread::available_parallelism;
 use std::time::Instant;
 use clap::{arg, Arg, Parser};
 use console::{Style};
+use indicatif::DecimalBytes;
 use parse_size::{parse_size, Error};
 use sysinfo::{System};
 use crate::cpu_benchmark::CPUBenchmark;
@@ -68,6 +69,7 @@ fn main() {
     println!("{:<30}{:<10}", "System OS version:", system_info_style.apply_to(System::long_os_version()
                 .unwrap_or(String::from("Unknown"))));
     println!("{:<30}{:<10}", "Number of CPU threads:", system_info_style.apply_to(sys.cpus().len()));
+    println!("{:<30}{:<10}", "Available memory:", system_info_style.apply_to(format!("{}/{}", DecimalBytes(sys.available_memory()), DecimalBytes(sys.total_memory()))));
     println!();
 
     let mut cpu_benchmark = Arc::new(CPUBenchmark::new(1,
