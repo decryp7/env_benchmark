@@ -28,11 +28,11 @@ impl OpenOptionsExt for OpenOptions {
     #[cfg(windows)]
     fn disable_buffering(&mut self) -> &mut Self {
         use std::os::windows::fs::OpenOptionsExt;
-        self.custom_flags(winapi::um::winbase::FILE_FLAG_WRITE_THROUGH | winapi::um::winbase::FILE_FLAG_NO_BUFFERING)
+        self.custom_flags(winapi::um::winbase::FILE_FLAG_WRITE_THROUGH | winapi::um::winbase::FILE_FLAG_NO_BUFFERING | winapi::um::winbase::FILE_FLAG_RANDOM_ACCESS)
     }
 }
 
-const BUF_SIZE: usize = 100 * 1000 * 1024;
+const BUF_SIZE: usize = 10 * 1000 * 1024;
 
 pub struct DiskBenchmark {
     path: String,
