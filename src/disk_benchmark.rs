@@ -84,11 +84,11 @@ impl DiskBenchmark {
         let mut total_elapsed = 0u64;
 
         for _ in 0..self.num_iterations {
-            #[cfg(target_os = "windows")]
-            if !crate::win32::Win32::clear_standby_list()
-            {
-                println!("Unable to clear file cache. Result may not be accurate.");
-            }
+            // #[cfg(target_os = "windows")]
+            // if !crate::win32::Win32::clear_standby_list()
+            // {
+            //     println!("Unable to clear file cache. Result may not be accurate.");
+            // }
 
             self.delete_temp_file();
 
@@ -139,11 +139,11 @@ impl DiskBenchmark {
         let mut total_elapsed = 0u64;
 
         for _ in 0..self.num_iterations {
-            #[cfg(target_os = "windows")]
-            if !crate::win32::Win32::clear_standby_list()
-            {
-                println!("Unable to clear file cache. Result may not be accurate.");
-            }
+            // #[cfg(target_os = "windows")]
+            // if !crate::win32::Win32::clear_standby_list()
+            // {
+            //     println!("Unable to clear file cache. Result may not be accurate.");
+            // }
 
             let now = Instant::now();
 
