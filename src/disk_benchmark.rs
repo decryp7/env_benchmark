@@ -4,6 +4,7 @@ use indicatif::{DecimalBytes, HumanBytes, HumanCount, HumanDuration, ProgressBar
 use std::io::{BufWriter, Write, BufReader, Read, BufRead};
 use std::time::{Duration, Instant};
 use console::Style;
+use parse_size::parse_size;
 
 trait OpenOptionsExt {
     fn disable_buffering(&mut self) -> &mut Self;
@@ -27,7 +28,7 @@ impl OpenOptionsExt for OpenOptions {
     #[cfg(windows)]
     fn disable_buffering(&mut self) -> &mut Self {
         use std::os::windows::fs::OpenOptionsExt;
-        self.custom_flags(winapi::um::winbase::FILE_FLAG_NO_BUFFERING)
+        self.custom_flags(winapi::um::winbase::FILE_FLAG_WRITE_THROUGH | winapi::um::winbase::FILE_FLAG_NO_BUFFERING)
     }
 }
 
@@ -79,8 +80,8 @@ impl DiskBenchmark {
         bar.inc(0);
 
 
-        const BUF_SIZE: usize = 8 * 1024;
-        let random_bytes: Vec<u8> = vec![1; BUF_SIZE];
+        let buf_size: usize = parse_size("100MB").unwrap() as usize;
+        let random_bytes: Vec<u8> = vec![1; buf_size];
         let mut total_elapsed = 0u64;
 
         for _ in 0..self.num_iterations {
@@ -101,11 +102,11 @@ impl DiskBenchmark {
 
             let now = Instant::now();
             let mut remaining_size = self.size;
-            let mut f = BufWriter::with_capacity(BUF_SIZE, file);
+            let mut f = BufWriter::with_capacity(buf_size, file);
             while remaining_size > 0 {
                 f.write(&random_bytes).unwrap();
-                if remaining_size >= BUF_SIZE as u64 {
-                    remaining_size -= BUF_SIZE as u64;
+                if remaining_size >= buf_size as u64 {
+                    remaining_size -= buf_size as u64;
                 } else {
                     remaining_size = 0;
                 }
@@ -122,7 +123,7 @@ impl DiskBenchmark {
     }
 
     fn run_read(&self) {
-        const BUF_SIZE: usize = 1000 * 1024;
+        let buf_size: usize = parse_size("100MB").unwrap() as usize;
         let value_style = Style::new().bright().green().bold().underlined();
         let bar = ProgressBar::new(self.num_iterations as u64)
             .with_message(format!("Reading {} of size {} {} times...",
@@ -135,7 +136,7 @@ impl DiskBenchmark {
         bar.enable_steady_tick(Duration::from_secs(1));
         bar.inc(0);
 
-        let mut read_data =  vec![0; BUF_SIZE];
+        let mut read_data =  vec![0; buf_size];
         let mut total_elapsed = 0u64;
 
         for _ in 0..self.num_iterations {
@@ -153,7 +154,7 @@ impl DiskBenchmark {
                 .open(&self.path)
                 .unwrap();
 
-            let mut f = BufReader::with_capacity(BUF_SIZE, file);
+            let mut f = BufReader::with_capacity(buf_size, file);
             let mut size = f.read(read_data.as_mut_slice()).unwrap();
             while size > 0 {
                 size = f.read(read_data.as_mut_slice()).unwrap();
