@@ -80,7 +80,7 @@ impl DiskBenchmark {
         bar.inc(0);
 
 
-        const BUF_SIZE: usize = 100 * 1000 * 1024;
+        const BUF_SIZE: usize = 1 * 1000 * 1024;
         let random_bytes: Vec<u8> = vec![1; BUF_SIZE];
         let mut total_elapsed = 0u64;
 
@@ -93,7 +93,7 @@ impl DiskBenchmark {
 
             self.delete_temp_file();
 
-            let file = OpenOptions::new()
+            let mut file = OpenOptions::new()
                 .write(true)
                 .create(true)
                 .disable_buffering()
@@ -102,9 +102,8 @@ impl DiskBenchmark {
 
             let now = Instant::now();
             let mut remaining_size = self.size;
-            let mut f = BufWriter::new(file);
             while remaining_size > 0 {
-                f.write(&random_bytes).unwrap();
+                file.write(&random_bytes).unwrap();
                 if remaining_size >= BUF_SIZE as u64 {
                     remaining_size -= BUF_SIZE as u64;
                 } else {
@@ -147,17 +146,15 @@ impl DiskBenchmark {
             // }
 
             let now = Instant::now();
-
-            let file = OpenOptions::new()
+            let mut file = OpenOptions::new()
                 .read(true)
                 .disable_buffering()
                 .open(&self.path)
                 .unwrap();
 
-            let mut f = BufReader::new(file);
-            let mut size = f.read(read_data.as_mut_slice()).unwrap();
+            let mut size = file.read(read_data.as_mut_slice()).unwrap();
             while size > 0 {
-                size = f.read(read_data.as_mut_slice()).unwrap();
+                size = file.read(read_data.as_mut_slice()).unwrap();
             }
             total_elapsed += now.elapsed().as_secs();
             bar.inc(1);
