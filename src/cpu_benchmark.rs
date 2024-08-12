@@ -88,7 +88,7 @@ impl CPUBenchmark {
     }
 
     pub fn one_iteration(self: Arc<Self>) -> u128 {
-        self.remaining_calculations.swap(self.num_calculations, Ordering::Acquire);
+        self.remaining_calculations.swap(self.num_calculations, Ordering::Relaxed);
         let now = Instant::now();
         let mut threads = Vec::new();
         // let counter = Arc::new(AtomicU32::new(0));
@@ -97,15 +97,15 @@ impl CPUBenchmark {
             let s = self.clone();
             // let c = counter.clone();
             threads.push(thread::spawn(move || {
-                while s.remaining_calculations.load(Ordering::Acquire) > 0 {
-                    s.remaining_calculations.fetch_sub(1, Ordering::Acquire);
+                while s.remaining_calculations.load(Ordering::Relaxed) > 0 {
+                    s.remaining_calculations.fetch_sub(1, Ordering::Relaxed);
                     let now = Instant::now();
                     Self::chudnovsky(s.precision).unwrap().to_decimal().value();
-                    // c.fetch_add(1, Ordering::Acquire);
+                    // c.fetch_add(1, Ordering::Relaxed);
                     // println!("[Thread {:?}] [Counter {}] Remaining calculations: {}. Took {}s",
                     //          thread::current().id(),
-                    //          c.load(Ordering::Acquire),
-                    //          s.remaining_calculations.load(Ordering::Acquire),
+                    //          c.load(Ordering::Relaxed),
+                    //          s.remaining_calculations.load(Ordering::Relaxed),
                     //          now.elapsed().as_secs());
                     // println!();
                 }
