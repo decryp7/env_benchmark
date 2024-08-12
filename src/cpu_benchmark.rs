@@ -1,7 +1,8 @@
 use std::hint::black_box;
-use std::sync::Arc;
-use std::sync::atomic::{AtomicU32, Ordering};
-use std::thread;
+use std::sync::{Arc, Mutex};
+use std::sync::atomic::{AtomicI32, AtomicU32, Ordering};
+use std::{io, thread};
+use std::io::{stdout, Write};
 use std::time::{Duration, Instant};
 use console::Style;
 use indicatif::{HumanCount, HumanDuration, HumanFloatCount, ProgressBar, ProgressStyle};
@@ -16,7 +17,7 @@ pub struct CPUBenchmark {
     precision: usize,
     num_iterations: u32,
     num_calculations: u32,
-    remaining_calculations: AtomicU32,
+    calculation_queue: Mutex<Vec<u32>>,
 }
 
 impl CPUBenchmark {
@@ -24,11 +25,14 @@ impl CPUBenchmark {
                 precision: usize,
                num_iterations: u32,
                num_calculations: u32) -> CPUBenchmark {
-        Self {num_cpu_threads, 
+        Self
+        {
+            num_cpu_threads,
             precision, 
             num_iterations, 
             num_calculations,
-            remaining_calculations: AtomicU32::new(0)}
+            calculation_queue: Mutex::new((0..num_calculations).collect())
+        }
     }
 
     fn binary_split(a: u32, b: u32) -> (IBig, IBig, IBig) {
@@ -88,15 +92,32 @@ impl CPUBenchmark {
     }
 
     pub fn one_iteration(self: Arc<Self>) -> u128 {
-        self.remaining_calculations.swap(self.num_calculations, Ordering::Relaxed);
+        let mut guard = self.calculation_queue.lock().unwrap();
+        *guard = (0..self.num_calculations).collect();
+        drop(guard);
+
         let now = Instant::now();
         let mut threads = Vec::new();
 
         for _ in 0..self.num_cpu_threads {
             let s = self.clone();
+            println!("Started 1 thread");
             threads.push(thread::spawn(move || {
-                while s.remaining_calculations.fetch_sub(1, Ordering::Relaxed) > 0 {
-                    Self::chudnovsky(s.precision).unwrap().to_decimal().value();
+                loop
+                {
+                    let mut guard = s.calculation_queue.lock().unwrap();
+                    let o = guard.pop();
+                    drop(guard);
+                    match o {
+                        None => {
+                            break;
+                        }
+                        Some(i) => {
+                            //let now = Instant::now();
+                            Self::chudnovsky(s.precision).unwrap().to_decimal().value();
+                            //println!("Calculation {} took {}s.", i, now.elapsed().as_secs());
+                        }
+                    }
                 }
             }));
         }
