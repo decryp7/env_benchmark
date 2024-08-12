@@ -19,24 +19,31 @@ use sysinfo::{System};
 use crate::cpu_benchmark::CPUBenchmark;
 use crate::disk_benchmark::DiskBenchmark;
 
+///Environment benchmark program to compare relative performance between virtual and physical machine
 #[derive(Parser, Debug)]
 #[command(version, about, long_about = None)]
 struct Args {
+    ///Total number of calculations to execute for CPU multicore test
     #[arg(short, long, default_value_t = 20)]
     num_calculations: u32,
 
+    ///Number of iterations to execute to get the average result
     #[arg(short, long, default_value_t = 5)]
     iterations: u32,
 
+    ///PI accuracy to number of  decimal points
     #[arg(short, long, default_value_t = 3000)]
     pi_precision: u32,
 
+    ///Size of benchmark file for testing file read and write performance
     #[arg(short, long, default_value = "4GB")]
     filesize: String,
 
+    ///Read and Write buffer size
     #[arg(short, long, default_value = "100MB")]
     buffer_size: String,
 
+    ///Location of benchmark file. Change this to benchmark other storage locations
     #[arg(short, long, default_value_t = env::temp_dir().into_os_string().into_string().unwrap())]
     temp_file_directory: String
 }
