@@ -101,7 +101,6 @@ impl CPUBenchmark {
 
         for _ in 0..self.num_cpu_threads {
             let s = self.clone();
-            println!("Started 1 thread");
             threads.push(thread::spawn(move || {
                 loop
                 {
