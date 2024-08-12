@@ -90,15 +90,13 @@ fn main() {
     println!("{:<30}{:<10}", "Available memory:", system_info_style.apply_to(format!("{}/{}", DecimalBytes(sys.available_memory()), DecimalBytes(sys.total_memory()))));
     println!();
 
-    let mut cpu_benchmark = Arc::new(CPUBenchmark::new(1,
-                                                   precision,
+    let mut cpu_benchmark = Arc::new(CPUBenchmark::new(precision,
                                                    num_iterations,
                                                    1));
     cpu_benchmark.run();
     println!();
 
-    cpu_benchmark = Arc::new(CPUBenchmark::new(sys.cpus().len(),
-                                                precision,
+    cpu_benchmark = Arc::new(CPUBenchmark::new(precision,
                                                 num_iterations,
                                                 num_calculations));
     cpu_benchmark.run();

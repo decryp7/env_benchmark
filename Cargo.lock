@@ -394,6 +394,7 @@ dependencies = [
  "indicatif",
  "parse-size",
  "rand 0.9.0-alpha.2",
+ "rayon",
  "sysinfo",
  "winapi",
  "winres",

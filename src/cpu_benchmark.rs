@@ -10,28 +10,27 @@ use color_eyre::eyre::{Report, Result};
 use dashu::base::SquareRoot;
 use dashu::float::FBig;
 use dashu::integer::IBig;
+use rayon::iter::IntoParallelRefIterator;
+use rayon::iter::ParallelIterator;
 use sysinfo::System;
 
 pub struct CPUBenchmark {
-    num_cpu_threads: usize,
     precision: usize,
     num_iterations: u32,
     num_calculations: u32,
-    calculation_queue: Mutex<Vec<u32>>,
+    calculation_queue: Vec<u32>,
 }
 
 impl CPUBenchmark {
-    pub fn new(num_cpu_threads: usize,
-                precision: usize,
+    pub fn new(precision: usize,
                num_iterations: u32,
                num_calculations: u32) -> CPUBenchmark {
         Self
         {
-            num_cpu_threads,
             precision, 
             num_iterations, 
             num_calculations,
-            calculation_queue: Mutex::new((0..num_calculations).collect())
+            calculation_queue: (0..num_calculations).collect()
         }
     }
 
@@ -92,38 +91,12 @@ impl CPUBenchmark {
     }
 
     pub fn one_iteration(self: Arc<Self>) -> u128 {
-        let mut guard = self.calculation_queue.lock().unwrap();
-        *guard = (0..self.num_calculations).collect();
-        drop(guard);
-
         let now = Instant::now();
-        let mut threads = Vec::new();
 
-        for _ in 0..self.num_cpu_threads {
-            let s = self.clone();
-            threads.push(thread::spawn(move || {
-                loop
-                {
-                    let mut guard = s.calculation_queue.lock().unwrap();
-                    let o = guard.pop();
-                    drop(guard);
-                    match o {
-                        None => {
-                            break;
-                        }
-                        Some(i) => {
-                            //let now = Instant::now();
-                            Self::chudnovsky(s.precision).unwrap().to_decimal().value();
-                            //println!("Calculation {} took {}s.", i, now.elapsed().as_secs());
-                        }
-                    }
-                }
-            }));
-        }
+        self.calculation_queue.par_iter().for_each(|i|{
+            Self::chudnovsky(self.precision).unwrap().to_decimal().value();
+        });
 
-        for thread in threads {
-            thread.join().unwrap();
-        }
         now.elapsed().as_millis()
     }
 
