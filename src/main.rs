@@ -102,8 +102,7 @@ fn main() {
     cpu_benchmark.run();
     println!();
 
-    let disk_benchmark = DiskBenchmark::new(Path::new(&file_path)
-                                                .join("disk.benchmark").to_str().unwrap().to_string(),
+    let disk_benchmark = DiskBenchmark::new(file_path,
                                             file_size,
                                             num_iterations,
                                             buffer_size);

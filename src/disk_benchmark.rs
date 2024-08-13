@@ -1,10 +1,14 @@
-use std::{cmp, env, fs, thread};
+use std::{alloc, cmp, env, fs, ptr, slice, thread};
+use std::alloc::Layout;
 use std::ffi::CString;
 use std::fs::{metadata, File, OpenOptions};
 use indicatif::{DecimalBytes, HumanBytes, HumanCount, HumanDuration, ProgressBar, ProgressStyle};
 use std::io::{BufWriter, Write, BufReader, Read, BufRead};
 #[cfg(target_os = "macos")]
 use std::os::fd::FromRawFd;
+#[cfg(target_os = "linux")]
+use std::os::linux::fs::MetadataExt;
+use std::path::Path;
 use std::time::{Duration, Instant};
 use console::Style;
 use libc::{c_int, close, fileno};
@@ -81,18 +85,56 @@ impl Write for MacDirectIO {
     }
 }
 
+// `O_DIRECT` requires all reads and writes
+// to be aligned to the block device's block
+// size.
+pub struct Aligned {
+    ptr: ptr::NonNull<u8>,
+    layout: Layout
+}
+
+impl Aligned {
+    pub fn new(size: usize, alignment: usize) -> Self {
+        let layout = alloc::Layout::from_size_align(size, alignment).unwrap();
+        let ptr = ptr::NonNull::new(unsafe {alloc::alloc(layout)}).unwrap();
+        Self { ptr, layout }
+    }
+
+    pub fn array<'a>(&self) -> &'a mut [u8] {
+        unsafe { slice::from_raw_parts_mut(self.ptr.cast::<u8>().as_ptr(), self.layout.size()) }
+    }
+}
+
+impl Drop for Aligned {
+    fn drop(&mut self) {
+        unsafe {
+            alloc::dealloc(self.ptr.cast::<u8>().as_ptr(), self.layout);
+        }
+    }
+}
+
 pub struct DiskBenchmark {
     path: String,
     size: u64,
     num_iterations: u32,
     buffer_size: usize,
+    alignment_size: usize
 }
 
 impl DiskBenchmark {
     pub fn new(path: String, size: u64, num_iterations: u32, buffer_size: u64) -> Self {
         let bs = buffer_size - buffer_size % 1024;
         let s = size - size % 1024;
-        Self {path, size: s, num_iterations, buffer_size: bs as usize}
+        let p = Path::new(&path)
+            .join("disk.benchmark").to_str().unwrap().to_string();
+
+        #[cfg(not(target_os = "linux"))]
+        let a = 4096;
+
+        #[cfg(target_os = "linux")]
+        let a = metadata(path).unwrap().st_blksize();
+
+        Self {path: p, size: s, num_iterations, buffer_size: bs as usize, alignment_size: a as usize }
     }
 
     pub fn run(&self){
@@ -129,7 +171,8 @@ impl DiskBenchmark {
         bar.enable_steady_tick(Duration::from_secs(1));
         bar.inc(0);
 
-        let random_bytes: Vec<u8> = vec![1; self.buffer_size];
+        let aligned = Aligned::new(self.buffer_size, 4096);
+        let random_bytes = aligned.array();
         let mut total_elapsed = 0u64;
 
         for _ in 0..self.num_iterations {
@@ -155,7 +198,7 @@ impl DiskBenchmark {
             let now = Instant::now();
             let mut remaining_size = self.size;
             while remaining_size > 0 {
-                file.write_all(&random_bytes).unwrap();
+                file.write_all(random_bytes).unwrap();
                 if remaining_size >= self.buffer_size as u64 {
                     remaining_size -= self.buffer_size as u64;
                 } else {
@@ -186,7 +229,8 @@ impl DiskBenchmark {
         bar.enable_steady_tick(Duration::from_secs(1));
         bar.inc(0);
 
-        let mut read_data =  vec![0; self.buffer_size];
+        let aligned = Aligned::new(self.buffer_size, 4096);
+        let read_data = aligned.array();
         let mut total_elapsed = 0u64;
 
         for _ in 0..self.num_iterations {
@@ -209,9 +253,9 @@ impl DiskBenchmark {
             let now = Instant::now();
 
 
-            let mut size = file.read(read_data.as_mut_slice()).unwrap();
+            let mut size = file.read(read_data).unwrap();
             while size > 0 {
-                size = file.read(read_data.as_mut_slice()).unwrap();
+                size = file.read(read_data).unwrap();
             }
             total_elapsed += now.elapsed().as_secs();
             bar.inc(1);
