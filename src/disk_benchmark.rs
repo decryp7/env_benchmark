@@ -13,6 +13,7 @@ use std::time::{Duration, Instant, SystemTime};
 use console::Style;
 use libc::{c_int, close, fileno};
 use parse_size::parse_size;
+use rand::Rng;
 
 trait OpenOptionsExt {
     fn disable_buffering(&mut self) -> &mut Self;
@@ -176,6 +177,10 @@ impl DiskBenchmark {
 
         let aligned = Aligned::new(self.buffer_size, 4096);
         let random_bytes = aligned.array();
+        for i in 0..random_bytes.len()
+        {
+            random_bytes[i] = rand::thread_rng().random();
+        }
         let mut total_elapsed = 0u64;
 
         for _ in 0..self.num_iterations {
