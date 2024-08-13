@@ -1,9 +1,12 @@
 use std::{cmp, env, fs, thread};
-use std::fs::{metadata, OpenOptions};
+use std::ffi::CString;
+use std::fs::{metadata, File, OpenOptions};
 use indicatif::{DecimalBytes, HumanBytes, HumanCount, HumanDuration, ProgressBar, ProgressStyle};
 use std::io::{BufWriter, Write, BufReader, Read, BufRead};
+use std::os::fd::FromRawFd;
 use std::time::{Duration, Instant};
 use console::Style;
+use libc::{c_int, close, fileno};
 use parse_size::parse_size;
 
 trait OpenOptionsExt {
@@ -21,14 +24,56 @@ impl OpenOptionsExt for OpenOptions {
 
     #[cfg(target_os = "macos")]
     fn disable_buffering(&mut self) -> &mut Self {
-        use std::os::unix::fs::OpenOptionsExt;
-        self.custom_flags(O_DIRECT)
+        self
     }
 
     #[cfg(windows)]
     fn disable_buffering(&mut self) -> &mut Self {
         use std::os::windows::fs::OpenOptionsExt;
-        self.custom_flags(winapi::um::winbase::FILE_FLAG_WRITE_THROUGH | winapi::um::winbase::FILE_FLAG_NO_BUFFERING | winapi::um::winbase::FILE_FLAG_RANDOM_ACCESS)
+        self.custom_flags(winapi::um::winbase::FILE_FLAG_WRITE_THROUGH | winapi::um::winbase::FILE_FLAG_NO_BUFFERING)
+    }
+}
+
+pub struct MacDirectIO {
+    fd: c_int,
+    file: File
+}
+
+impl Drop for MacDirectIO {
+    fn drop(&mut self) {
+        unsafe {
+            let i = libc::close(self.fd);
+        }
+    }
+}
+
+impl MacDirectIO {
+    pub fn open(path: String) -> Self {
+        unsafe {
+            let path = CString::new(&*path).unwrap();
+            let flags = libc::O_RDWR | libc::O_CREAT;
+            let mode: c_int = 0o644;
+            let fd = libc::open(path.as_ptr(), flags, mode);
+            let r = libc::fcntl(fd, libc::F_NOCACHE, 1);
+            let f = File::from_raw_fd(fd);
+            Self { fd, file: f}
+        }
+    }
+}
+
+impl Read for MacDirectIO {
+    fn read(&mut self, buf: &mut [u8]) -> std::io::Result<usize> {
+        self.file.read(buf)
+    }
+}
+
+impl Write for MacDirectIO {
+    fn write(&mut self, buf: &[u8]) -> std::io::Result<usize> {
+        self.file.write(buf)
+    }
+
+    fn flush(&mut self) -> std::io::Result<()> {
+        self.file.flush()
     }
 }
 
@@ -92,6 +137,10 @@ impl DiskBenchmark {
 
             self.delete_temp_file();
 
+            #[cfg(target_os = "macos")]
+            let mut file = MacDirectIO::open(self.path.clone());
+
+            #[cfg(not(target_os = "macos"))]
             let mut file = OpenOptions::new()
                 .write(true)
                 .create(true)
@@ -143,12 +192,18 @@ impl DiskBenchmark {
             //     println!("Unable to clear file cache. Result may not be accurate.");
             // }
 
-            let now = Instant::now();
+            #[cfg(target_os = "macos")]
+            let mut file = MacDirectIO::open(self.path.clone());
+
+            #[cfg(not(target_os = "macos"))]
             let mut file = OpenOptions::new()
                 .read(true)
                 .disable_buffering()
                 .open(&self.path)
                 .unwrap();
+
+            let now = Instant::now();
+
 
             let mut size = file.read(read_data.as_mut_slice()).unwrap();
             while size > 0 {

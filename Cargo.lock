@@ -392,6 +392,7 @@ dependencies = [
  "dashu",
  "dinvoke_rs",
  "indicatif",
+ "libc",
  "parse-size",
  "rand 0.9.0-alpha.2",
  "rayon",
