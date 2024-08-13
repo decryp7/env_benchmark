@@ -3,6 +3,7 @@ use std::ffi::CString;
 use std::fs::{metadata, File, OpenOptions};
 use indicatif::{DecimalBytes, HumanBytes, HumanCount, HumanDuration, ProgressBar, ProgressStyle};
 use std::io::{BufWriter, Write, BufReader, Read, BufRead};
+#[cfg(target_os = "macos")]
 use std::os::fd::FromRawFd;
 use std::time::{Duration, Instant};
 use console::Style;
@@ -34,11 +35,13 @@ impl OpenOptionsExt for OpenOptions {
     }
 }
 
+#[cfg(target_os = "macos")]
 pub struct MacDirectIO {
     fd: c_int,
     file: File
 }
 
+#[cfg(target_os = "macos")]
 impl Drop for MacDirectIO {
     fn drop(&mut self) {
         unsafe {
@@ -47,6 +50,7 @@ impl Drop for MacDirectIO {
     }
 }
 
+#[cfg(target_os = "macos")]
 impl MacDirectIO {
     pub fn open(path: String) -> Self {
         unsafe {
@@ -61,12 +65,14 @@ impl MacDirectIO {
     }
 }
 
+#[cfg(target_os = "macos")]
 impl Read for MacDirectIO {
     fn read(&mut self, buf: &mut [u8]) -> std::io::Result<usize> {
         self.file.read(buf)
     }
 }
 
+#[cfg(target_os = "macos")]
 impl Write for MacDirectIO {
     fn write(&mut self, buf: &[u8]) -> std::io::Result<usize> {
         self.file.write(buf)
