@@ -14,13 +14,11 @@ trait OpenOptionsExt {
     fn disable_buffering(&mut self) -> &mut Self;
 }
 
-const O_DIRECT: i32 = 0o0040000;
-
 impl OpenOptionsExt for OpenOptions {
     #[cfg(target_os = "linux")]
     fn disable_buffering(&mut self) -> &mut Self {
         use std::os::unix::fs::OpenOptionsExt;
-        self.custom_flags(O_DIRECT)
+        self.custom_flags(libc::O_DIRECT)
     }
 
     #[cfg(target_os = "macos")]
