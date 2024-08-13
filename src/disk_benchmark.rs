@@ -9,7 +9,7 @@ use std::os::fd::FromRawFd;
 #[cfg(target_os = "linux")]
 use std::os::linux::fs::MetadataExt;
 use std::path::Path;
-use std::time::{Duration, Instant};
+use std::time::{Duration, Instant, SystemTime};
 use console::Style;
 use libc::{c_int, close, fileno};
 use parse_size::parse_size;
@@ -126,7 +126,10 @@ impl DiskBenchmark {
         let bs = buffer_size - buffer_size % 1024;
         let s = size - size % 1024;
         let p = Path::new(&path)
-            .join("disk.benchmark").to_str().unwrap().to_string();
+            .join(format!("{}.diskbenchmark", SystemTime::now().duration_since(std::time::UNIX_EPOCH).unwrap().as_millis()))
+            .to_str()
+            .unwrap()
+            .to_string();
 
         #[cfg(not(target_os = "linux"))]
         let a = 4096;
